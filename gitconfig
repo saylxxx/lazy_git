@@ -1,0 +1,7 @@
+[user]
+	name = mip.yang
+	email = mip.yang@homeplus.net.tw
+[alias]
+    lista = "!~/git-aliases.sh"
+    update-all-branches = "!f() { rm -f .git/ORIG_HEAD.lock && current_branch=$(git symbolic-ref --short HEAD) && echo \"Current branch before update: $current_branch\" && git branch | grep -v '\\*' | xargs -I {} sh -c 'git checkout {} && git pull' && echo \"Switching back to: $current_branch\" && git checkout $current_branch; }; f"
+    clean-all-branches = "!git branch | grep -v '\\*' | grep -v 'master' | grep -v 'develop' | xargs -n 1 git branch -D"
