@@ -3,8 +3,8 @@
 # 定義別名和描述
 declare -A aliases
 aliases=(
-    ["update-all-branches"]="更新所有本地分支"
-    ["delete-unused-branches"]="刪除所有本地分支，排除 master 和 develop"
+    ["update-ab"]="更新所有本地分支"
+    ["clean-ab"]="刪除所有本地分支，排除 master 和 develop"
     ["lista"]="列出所有自訂的別名及其對應的命令"
 )
 
