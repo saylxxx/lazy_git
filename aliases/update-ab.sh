@@ -3,6 +3,10 @@
 # 此腳本用於更新所有本地分支
 # 它會切換到每個本地分支並執行 git pull，然後返回到原本的分支
 
+# 移除 ORIG_HEAD.lock 檔案
+rm -f .git/ORIG_HEAD.lock
+
+# 獲取當前分支名稱
 current_branch=$(git symbolic-ref --short HEAD)
 echo "當前分支: $current_branch"
 
