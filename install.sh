@@ -38,6 +38,9 @@ done
     echo "echo \"以下是所有自訂的 Git 別名：\""
     echo "declare -A aliases"
     echo "aliases=("
+
+    # 添加 lista 別名的描述鄉
+    echo "    [\"lista\"]=\"列出所有自訂的 Git 別名及其對應的命令\""
     
     for alias_script in "$ALIASES_DIR"/*.sh; do
         alias_name=$(basename "$alias_script" .sh)
