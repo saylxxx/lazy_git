@@ -1,8 +1,0 @@
-[user]
-	name = mip.yang
-	email = mip.yang@homeplus.net.tw
-[alias]
-    lista = "!~/git-aliases.sh"
-    update-ab = "!f() { rm -f .git/ORIG_HEAD.lock && current_branch=$(git symbolic-ref --short HEAD) && echo \"Current branch before update: $current_branch\" && git branch | grep -v '\\*' | xargs -I {} sh -c 'git checkout {} && git pull' && echo \"Switching back to: $current_branch\" && git checkout $current_branch; }; f"
-    clean-ab = "!f() { branches=$(git branch | grep -v '\\*' | grep -v 'master' | grep -v 'develop'); if [ -z \"$branches\" ]; then echo '完成'; else echo \"$branches\" | xargs -n 1 git branch -D; fi; }; f"
-    checkout-b = "!f() { desc=${1:-update}; git checkout -b feat_$(date +%m%d)_${desc}; }; f"
