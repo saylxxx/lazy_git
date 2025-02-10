@@ -24,6 +24,7 @@ for branch in $(git branch | grep -v '\\*'); do
   git worktree add -b $branch $worktree_dir origin/$branch
   (cd $worktree_dir && git pull)
   git worktree remove $worktree_dir
+  sleep 1 
 done
 
 # 切換回原本的分支
