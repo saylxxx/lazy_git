@@ -99,8 +99,4 @@ fi
 # 複製生成的 .gitconfig 到用戶主目錄
 cp "$GIT_CONFIG_DIR/.gitconfig" ~/.gitconfig
 
-# 確保 .gitignore 和 README.md 文件存在
-[ ! -f .gitignore ] && echo "# Ignore files" > .gitignore
-[ ! -f README.md ] && echo "# Project README" > README.md
-
 echo "Git 配置和別名腳本已安裝完成。"
