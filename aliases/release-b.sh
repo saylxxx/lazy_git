@@ -1,13 +1,20 @@
 #!/bin/bash
 
 # 更新本地 master 分支到最新版，並建立一個以 R 開頭的日期分支
-# 使用方法: release-b [描述]
-# 如果沒有提供描述，則只會使用日期作為分支名稱; e.g., R20200101
+# 使用方法: release-b [描述] [日期]
+# 使用範例:
+#   ./release-b.sh "描述"
+#   ./release-b.sh "描述" 20250212  # 會建立 R20250212_描述 分支
+#   ./release-b.sh "" 20110101      # 會建立 R20110101 分支
 
 git checkout master
 git pull origin master
 
-current_date=$(date +%Y%m%d)
+if [ -n "$2" ]; then
+  current_date=$2
+else
+  current_date=$(date +%Y%m%d)
+fi
 
 if [ -n "$1" ]; then
   branch_name="R${current_date}_$1"
