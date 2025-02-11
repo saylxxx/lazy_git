@@ -39,24 +39,33 @@ done
     echo "declare -A aliases"
     echo "aliases=("
 
-    # 添加 lista 別名的描述鄉
+    # 手動添加 lista 別名的描述
     echo "    [\"lista\"]=\"列出所有自訂的 Git 別名及其對應的命令\""
     
     for alias_script in "$ALIASES_DIR"/*.sh; do
         alias_name=$(basename "$alias_script" .sh)
         description=$(sed -n '/^# /p' "$alias_script" | sed 's/# //')
-        echo "    [\"$alias_name\"]=\"$description\""
+        if [ "$alias_name" != "lista" ]; then
+            echo "    [\"$alias_name\"]=\"$description\""
+        fi
     done
     
     echo ")"
     echo ""
     echo "# 列出別名和描述"
-    echo "for alias in \"\${!aliases[@]}\"; do"
-    echo "    echo \"\$alias:\""
-    echo "    echo \"\${aliases[\$alias]}\" | while IFS= read -r line; do"
-    echo "        echo \"    \$line\""
-    echo "    done"
-    echo "    echo \"\""
+    echo "echo \"lista:\""
+    echo "echo \"\${aliases[lista]}\" | while IFS= read -r line; do"
+    echo "    echo \"    \$line\""
+    echo "done"
+    echo "echo \"\""
+    echo "for alias in \$(echo \${!aliases[@]} | tr ' ' '\n' | sort); do"
+    echo "    if [ \"\$alias\" != \"lista\" ]; then"
+    echo "        echo \"\$alias:\""
+    echo "        echo \"\${aliases[\$alias]}\" | while IFS= read -r line; do"
+    echo "            echo \"    \$line\""
+    echo "        done"
+    echo "        echo \"\""
+    echo "    fi"
     echo "done"
 } > "$GIT_ALIASES_DIR/lista.sh"
 
