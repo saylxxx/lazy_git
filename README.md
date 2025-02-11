@@ -47,4 +47,4 @@ Git 懶人包；滿足日常開發需求的 Git 別名腳本。
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](samples/lazy_git/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
