@@ -34,7 +34,7 @@ Git 懶人包；滿足日常開發需求的 Git 別名腳本。
 6. 讀取目前已存在的 `.gitconfig` 文件中的用戶名和郵箱。
 7. 生成新的 `.gitconfig` 文件並複製到用戶主目錄。
 
-### 原先 gitconfig 內容安排
+### 備份說明
 
 在執行 `install.sh` 腳本後，原先的 `.gitconfig` 文件會被備份到 `~/git-config-history` 目錄，文件名會加上時間戳。例如：
 ~/.gitconfig -> ~/git-config-history/.gitconfig_20250102140037
@@ -44,3 +44,7 @@ Git 懶人包；滿足日常開發需求的 Git 別名腳本。
 - 用戶名和郵箱（從原先的 `.gitconfig` 文件中讀取，若不存在則使用預設值）。
 - 所有自訂的 Git 別名，這些別名會指向 `~/git-aliases` 目錄中的對應腳本。
 - `lista` 別名，用於列出所有自訂的 Git 別名及其對應的命令。
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](samples/lazy_git/LICENSE) file for details.
