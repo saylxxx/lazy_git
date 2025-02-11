@@ -5,11 +5,13 @@
 # 如果沒有本地分支，顯示 '完成'
 
 f() {
-    branches=$(git branch | grep -v '\\*' | grep -v 'master' | grep -v 'develop')
+    branches=$(git branch | grep -v '\*' | grep -v 'master' | grep -v 'develop')
     if [ -z "$branches" ]; then
         echo '完成'
     else
-        echo "$branches" | xargs -n 1 git branch -D
+        echo "$branches" | while read branch; do
+            git branch -D "$branch"
+        done
     fi
 }
 f
