@@ -1,8 +1,8 @@
 #!/bin/bash
+timestamp=$(date +%Y%m%d%H%M%S)
 
-# 獲取 Git 的最新 commit hash 作為版本號的一部分
 GIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-VERSION="1.0.0-$GIT_HASH"
+VERSION="1.0.0-$GIT_HASH-$timestamp"
 
 # 檢查是否 dry run 模式
 DRY_RUN=false
@@ -53,7 +53,6 @@ mkdir -p "$GIT_ALIASES_DIR"
 mkdir -p "$GIT_CONFIG_HISTORY_DIR"
 
 # 設置備份文件路徑
-timestamp=$(date +%Y%m%d%H%M%S)
 BACKUP_FILE="$GIT_CONFIG_HISTORY_DIR/.gitconfig_$timestamp"
 
 # 檢查 aliases 目錄是否存在
@@ -123,40 +122,43 @@ generate_lista_script() {
     chmod +x "$GIT_ALIASES_DIR/lista.sh"
 }
 
+# 讀取目前已存在的 gitconfig 的內容並生成新的 gitconfig
+generate_gitconfig() {
+    if [ -f ~/.gitconfig ]; then
+        current_name=$(git config --global user.name)
+        current_email=$(git config --global user.email)
+    else
+        current_name="mip.yang"
+        current_email="mip.yang@homeplus.net.tw"
+    fi
+
+    # 生成 gitconfig 內容
+    {
+        # 還原原先的非 user 和 alias 配置
+        if [ -f "$BACKUP_FILE" ]; then
+            awk '/^\[/{in_section=0} /^\[user\]/{in_section=1} /^\[alias\]/{in_section=1} !in_section' "$BACKUP_FILE"
+        fi
+
+        echo "[user]"
+        echo "    name = $current_name"
+        echo "    email = $current_email"
+        echo "[alias]"
+        
+        for alias_script in "$ALIASES_DIR"/*.sh; do
+            alias_name=$(basename "$alias_script" .sh)
+            echo "    $alias_name = \"!$GIT_ALIASES_DIR/$alias_name.sh\""
+        done
+        
+        # 添加 lista 別名
+        echo "    lista = \"!$GIT_ALIASES_DIR/lista.sh\""
+    } > "$GIT_CONFIG_DIR/.gitconfig"
+}
+
 # 執行安裝
 backup_gitconfig
 copy_alias_scripts
 generate_lista_script
-
-# 讀取目前已存在的 gitconfig 的內容
-if [ -f ~/.gitconfig ]; then
-    current_name=$(git config --global user.name)
-    current_email=$(git config --global user.email)
-else
-    current_name="mip.yang"
-    current_email="mip.yang@homeplus.net.tw"
-fi
-
-# 生成 gitconfig 內容
-{
-    # 還原原先的非 user 和 alias 配置
-    if [ -f "$BACKUP_FILE" ]; then
-        awk '/^\[/{in_section=0} /^\[user\]/{in_section=1} /^\[alias\]/{in_section=1} !in_section' "$BACKUP_FILE"
-    fi
-
-    echo "[user]"
-    echo "    name = $current_name"
-    echo "    email = $current_email"
-    echo "[alias]"
-    
-    for alias_script in "$ALIASES_DIR"/*.sh; do
-        alias_name=$(basename "$alias_script" .sh)
-        echo "    $alias_name = \"!$GIT_ALIASES_DIR/$alias_name.sh\""
-    done
-    
-    # 添加 lista 別名
-    echo "    lista = \"!$GIT_ALIASES_DIR/lista.sh\""
-} > "$GIT_CONFIG_DIR/.gitconfig"
+generate_gitconfig
 
 # 複製生成的 .gitconfig 到用戶主目錄
 cp "$GIT_CONFIG_DIR/.gitconfig" ~/.gitconfig
