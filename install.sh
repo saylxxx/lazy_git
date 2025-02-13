@@ -38,6 +38,12 @@ if [ "$DRY_RUN" = true ]; then
     echo "ALIASES_DIR: $ALIASES_DIR"
     echo "GIT_CONFIG_HISTORY_DIR: $GIT_CONFIG_HISTORY_DIR"
     echo "版本號: $VERSION"
+    
+    if [ -f ~/.gitconfig ]; then
+        echo "將被保留的非 user 和 alias 配置:"
+        awk '/^\[/{in_section=0} /^\[user\]/{in_section=1} /^\[alias\]/{in_section=1} !in_section' ~/.gitconfig
+    fi
+    
     exit 0
 fi
 
@@ -45,6 +51,10 @@ fi
 mkdir -p "$GIT_CONFIG_DIR"
 mkdir -p "$GIT_ALIASES_DIR"
 mkdir -p "$GIT_CONFIG_HISTORY_DIR"
+
+# 設置備份文件路徑
+timestamp=$(date +%Y%m%d%H%M%S)
+BACKUP_FILE="$GIT_CONFIG_HISTORY_DIR/.gitconfig_$timestamp"
 
 # 檢查 aliases 目錄是否存在
 if [ ! -d "$ALIASES_DIR" ]; then
@@ -55,9 +65,8 @@ fi
 # 備份現有的 .gitconfig
 backup_gitconfig() {
     if [ -f ~/.gitconfig ]; then
-        timestamp=$(date +%Y%m%d%H%M%S)
-        mv ~/.gitconfig "$GIT_CONFIG_HISTORY_DIR/.gitconfig_$timestamp"
-        echo "現有的 .gitconfig 已備份到 $GIT_CONFIG_HISTORY_DIR/.gitconfig_$timestamp"
+        mv ~/.gitconfig "$BACKUP_FILE"
+        echo "現有的 .gitconfig 已備份到 $BACKUP_FILE"
     fi
 }
 
@@ -130,6 +139,11 @@ fi
 
 # 生成 gitconfig 內容
 {
+    # 還原原先的非 user 和 alias 配置
+    if [ -f "$BACKUP_FILE" ]; then
+        awk '/^\[/{in_section=0} /^\[user\]/{in_section=1} /^\[alias\]/{in_section=1} !in_section' "$BACKUP_FILE"
+    fi
+
     echo "[user]"
     echo "    name = $current_name"
     echo "    email = $current_email"
