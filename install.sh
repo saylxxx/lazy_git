@@ -1,10 +1,45 @@
 #!/bin/bash
 
-# 定義目錄變數
-GIT_CONFIG_DIR=~/git-config
-GIT_ALIASES_DIR=~/git-aliases
-ALIASES_DIR=aliases
-GIT_CONFIG_HISTORY_DIR=~/git-config-history
+# 獲取 Git 的最新 commit hash 作為版本號的一部分
+GIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+VERSION="1.0.0-$GIT_HASH"
+
+# 檢查是否 dry run 模式
+DRY_RUN=false
+if [[ "$1" == "--dryrun" ]]; then
+    DRY_RUN=true
+fi
+
+# 檢查操作系統
+OS_TYPE=$(uname)
+if [[ "$OS_TYPE" == "Linux" ]]; then
+    USER_HOME=~
+    GIT_CONFIG_DIR="$USER_HOME/git-config"
+    GIT_ALIASES_DIR="$USER_HOME/git-aliases"
+    ALIASES_DIR=aliases
+    GIT_CONFIG_HISTORY_DIR="$USER_HOME/git-config-history"
+elif [[ "$OS_TYPE" == "MINGW"* || "$OS_TYPE" == "CYGWIN"* ]]; then
+    USER_HOME=$(echo $USERPROFILE | sed 's/\\/\//g')
+    GIT_CONFIG_DIR="$USER_HOME/git-config"
+    GIT_ALIASES_DIR="$USER_HOME/git-aliases"
+    ALIASES_DIR=aliases
+    GIT_CONFIG_HISTORY_DIR="$USER_HOME/git-config-history"
+else
+    echo "不支援的操作系統: $OS_TYPE"
+    exit 1
+fi
+
+# Dry run: 打印相關資訊後退出
+if [ "$DRY_RUN" = true ]; then
+    echo "操作系統: $OS_TYPE"
+    echo "USER_HOME: $USER_HOME"
+    echo "GIT_CONFIG_DIR: $GIT_CONFIG_DIR"
+    echo "GIT_ALIASES_DIR: $GIT_ALIASES_DIR"
+    echo "ALIASES_DIR: $ALIASES_DIR"
+    echo "GIT_CONFIG_HISTORY_DIR: $GIT_CONFIG_HISTORY_DIR"
+    echo "版本號: $VERSION"
+    exit 0
+fi
 
 # 確保目錄存在
 mkdir -p "$GIT_CONFIG_DIR"
@@ -18,58 +53,71 @@ if [ ! -d "$ALIASES_DIR" ]; then
 fi
 
 # 備份現有的 .gitconfig
-if [ -f ~/.gitconfig ]; then
-    timestamp=$(date +%Y%m%d%H%M%S)
-    mv ~/.gitconfig "$GIT_CONFIG_HISTORY_DIR/.gitconfig_$timestamp"
-    echo "現有的 .gitconfig 已備份到 $GIT_CONFIG_HISTORY_DIR/.gitconfig_$timestamp"
-fi
+backup_gitconfig() {
+    if [ -f ~/.gitconfig ]; then
+        timestamp=$(date +%Y%m%d%H%M%S)
+        mv ~/.gitconfig "$GIT_CONFIG_HISTORY_DIR/.gitconfig_$timestamp"
+        echo "現有的 .gitconfig 已備份到 $GIT_CONFIG_HISTORY_DIR/.gitconfig_$timestamp"
+    fi
+}
 
 # 複製 alias 腳本到用戶主目錄並設置可執行權限
-for alias_script in "$ALIASES_DIR"/*.sh; do
-    cp "$alias_script" "$GIT_ALIASES_DIR/$(basename "$alias_script")"
-    chmod +x "$GIT_ALIASES_DIR/$(basename "$alias_script")"
-done
+copy_alias_scripts() {
+    for alias_script in "$ALIASES_DIR"/*.sh; do
+        cp "$alias_script" "$GIT_ALIASES_DIR/$(basename "$alias_script")"
+        chmod +x "$GIT_ALIASES_DIR/$(basename "$alias_script")"
+    done
+}
 
 # 生成 lista.sh 內容
-{
-    echo "#!/bin/bash"
-    echo ""
-    echo "# 列出所有自訂的別名及其對應的命令"
-    echo "echo \"以下是所有自訂的 Git 別名：\""
-    echo "declare -A aliases"
-    echo "aliases=("
+generate_lista_script() {
+    {
+        echo "#!/bin/bash"
+        echo ""
+        echo "# 列出所有自訂的別名及其對應的命令"
+        echo "echo \"以下是所有自訂的 Git 別名：\""
+        echo "declare -A aliases"
+        echo "aliases=("
 
-    # 手動添加 lista 別名的描述
-    echo "    [\"lista\"]=\"列出所有自訂的 Git 別名及其對應的命令\""
-    
-    for alias_script in "$ALIASES_DIR"/*.sh; do
-        alias_name=$(basename "$alias_script" .sh)
-        description=$(sed -n '/^# /p' "$alias_script" | sed 's/# //')
-        if [ "$alias_name" != "lista" ]; then
-            echo "    [\"$alias_name\"]=\"$description\""
-        fi
-    done
-    
-    echo ")"
-    echo ""
-    echo "# 列出別名和描述"
-    echo "echo \"lista:\""
-    echo "echo \"\${aliases[lista]}\" | while IFS= read -r line; do"
-    echo "    echo \"    \$line\""
-    echo "done"
-    echo "echo \"\""
-    echo "for alias in \$(echo \${!aliases[@]} | tr ' ' '\n' | sort); do"
-    echo "    if [ \"\$alias\" != \"lista\" ]; then"
-    echo "        echo \"\$alias:\""
-    echo "        echo \"\${aliases[\$alias]}\" | while IFS= read -r line; do"
-    echo "            echo \"    \$line\""
-    echo "        done"
-    echo "        echo \"\""
-    echo "    fi"
-    echo "done"
-} > "$GIT_ALIASES_DIR/lista.sh"
+        # 手動添加 lista 別名的描述
+        echo "    [\"lista\"]=\"列出所有自訂的 Git 別名及其對應的命令\""
+        
+        for alias_script in "$ALIASES_DIR"/*.sh; do
+            alias_name=$(basename "$alias_script" .sh)
+            description=$(sed -n '/^# /p' "$alias_script" | sed 's/# //')
+            if [ "$alias_name" != "lista" ]; then
+                echo "    [\"$alias_name\"]=\"$description\""
+            fi
+        done
+        
+        echo ")"
+        echo ""
+        echo "# 列出別名和描述"
+        echo "echo \"lista:\""
+        echo "echo \"\${aliases[lista]}\" | while IFS= read -r line; do"
+        echo "    echo \"    \$line\""
+        echo "done"
+        echo "echo \"\""
+        echo "for alias in \$(echo \${!aliases[@]} | tr ' ' '\n' | sort); do"
+        echo "    if [ \"\$alias\" != \"lista\" ]; then"
+        echo "        echo \"\$alias:\""
+        echo "        echo \"\${aliases[\$alias]}\" | while IFS= read -r line; do"
+        echo "            echo \"    \$line\""
+        echo "        done"
+        echo "        echo \"\""
+        echo "    fi"
+        echo "done"
+        echo ""
+        echo "echo \"$VERSION\""
+    } > "$GIT_ALIASES_DIR/lista.sh"
 
-chmod +x "$GIT_ALIASES_DIR/lista.sh"
+    chmod +x "$GIT_ALIASES_DIR/lista.sh"
+}
+
+# 執行安裝
+backup_gitconfig
+copy_alias_scripts
+generate_lista_script
 
 # 讀取目前已存在的 gitconfig 的內容
 if [ -f ~/.gitconfig ]; then
@@ -99,4 +147,4 @@ fi
 # 複製生成的 .gitconfig 到用戶主目錄
 cp "$GIT_CONFIG_DIR/.gitconfig" ~/.gitconfig
 
-echo "Git 配置和別名腳本已安裝完成。"
+echo "Git 配置和別名腳本已安裝完成，版本號: $VERSION"
