@@ -29,7 +29,8 @@ clean_ab_branches() {
     
     branches=$(git branch | grep -v '\*')
     for branch in $LAZYGIT_EXCLUDED_BRANCHES; do
-        branches=$(echo "$branches" | grep -v "$branch")
+        # 使用精確匹配，避免部分匹配的問題
+        branches=$(echo "$branches" | grep -v "^[[:space:]]*${branch}[[:space:]]*$")
     done
 
     if [ -z "$branches" ]; then
