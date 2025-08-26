@@ -113,6 +113,9 @@ generate_gitconfig() {
                     ;;
                 "lazygit")
                     echo "[lazygit]"
+                    echo "    # 全域預設設定 - 智能檢測會自動選擇最佳主分支"
+                    echo "    # 如需為特定專案設定不同分支，請使用:"
+                    echo "    # git manage-main-branch set <分支名>"
                     echo "    main-branch = $LAZYGIT_MAIN_BRANCH"
                     echo "    develop-branch = $LAZYGIT_DEVELOP_BRANCH"
                     ;;

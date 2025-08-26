@@ -70,8 +70,23 @@ show_status() {
     fi
     
     echo ""
+    
+    # 提供建議
+    if [ -z "$project_main" ] && [ -n "$global_main" ]; then
+        echo "💡 建議："
+        echo "   目前使用全域設定 ($global_main)，這會影響所有專案"
+        echo "   建議為此專案設定專屬的主分支："
+        echo "   git manage-main-branch set <分支名>"
+        echo ""
+    elif [ -z "$project_main" ] && [ -z "$global_main" ]; then
+        echo "💡 建議："
+        echo "   尚未設定主分支，建議為此專案設定："
+        echo "   git manage-main-branch set <分支名>"
+        echo ""
+    fi
+    
     echo "🎯 智能檢測結果:"
-    local detected=$(smart_detect_main_branch $remote_name false 2>/dev/null)
+    local detected=$(detect_main_branch_readonly $remote_name 2>/dev/null)
     echo "  檢測到的主分支: $detected"
 }
 

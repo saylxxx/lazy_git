@@ -27,8 +27,17 @@ clean_ab_branches() {
         echo "強制模式：將直接刪除所有符合條件的分支"
     fi
     
+    # 取得當前專案的主分支（優先使用專案級別配置）
+    local remote_name=$(get_remote_name)
+    local project_main=$(smart_detect_main_branch "$remote_name" false)
+    local project_develop=$(detect_develop_branch "$remote_name")
+    
+    # 建立排除清單（使用專案級別配置）
+    local excluded_branches="main dev release develop master production $project_main $project_develop"
+    excluded_branches=$(echo "$excluded_branches" | tr ' ' '\n' | sort | uniq | tr '\n' ' ')
+    
     branches=$(git branch | grep -v '\*')
-    for branch in $LAZYGIT_EXCLUDED_BRANCHES; do
+    for branch in $excluded_branches; do
         # 使用精確匹配，避免部分匹配的問題
         branches=$(echo "$branches" | grep -v "^[[:space:]]*${branch}[[:space:]]*$")
     done
