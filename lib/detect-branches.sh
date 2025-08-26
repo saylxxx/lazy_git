@@ -5,7 +5,7 @@
 # 這個工具會自動檢測當前 Git 倉庫的主分支和開發分支，並更新配置
 
 # 引用共用函數
-source "$(dirname "$0")/../config.sh"
+source "$(dirname "$0")/config.sh"
 source "$(dirname "$0")/common.sh"
 
 # 確保目錄存在
