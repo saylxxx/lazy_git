@@ -5,7 +5,7 @@ DEFAULT_USER_NAME="mip.yang"
 DEFAULT_USER_EMAIL="mip.yang@homeplus.net.tw"
 
 # 預設的分支名稱
-DEFAULT_MAIN_BRANCH="main"
+DEFAULT_MAIN_BRANCH="master"
 DEFAULT_DEVELOP_BRANCH="develop"
 
 # 設定 lazygit 相關變數
