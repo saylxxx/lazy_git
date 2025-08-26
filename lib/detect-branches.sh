@@ -4,8 +4,14 @@
 # 使用方法: detect-branches
 # 這個工具會自動檢測當前 Git 倉庫的主分支和開發分支，並更新配置
 
+# 引用路徑處理器
+source "$(dirname "$0")/path-helper.sh"
+
+# 取得正確的 config.sh 路徑
+CONFIG_PATH=$(get_config_path)
+
 # 引用共用函數
-source "$(dirname "$0")/config.sh"
+source "$CONFIG_PATH"
 source "$(dirname "$0")/common.sh"
 
 # 確保目錄存在

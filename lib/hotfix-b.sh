@@ -7,8 +7,14 @@
 #   ./hotfix-b.sh "描述" 20250212  # 會建立 hotfix20250212_描述 分支
 #   ./hotfix-b.sh "" 20250212      # 會建立 hotfix20250212 分支
 
+# 引用路徑處理器
+source "$(dirname "$0")/path-helper.sh"
+
+# 取得正確的 config.sh 路徑
+CONFIG_PATH=$(get_config_path)
+
 # 引用共用函數
-source "$(dirname "$0")/config.sh"
+source "$CONFIG_PATH"
 source "$(dirname "$0")/common.sh"
 
 # 確保目錄存在

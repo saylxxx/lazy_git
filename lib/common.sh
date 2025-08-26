@@ -21,56 +21,97 @@ get_remote_name() {
     echo $remote_name
 }
 
-# 自動檢測當前倉庫的主分支名稱
-detect_main_branch() {
+# 智能檢測主分支，支援互動式選擇
+smart_detect_main_branch() {
     local remote_name=$1
+    local interactive=${2:-true}  # 預設為互動模式
     
-    # 優先檢查 remote 的預設分支
+    # 1. 檢查是否已有專案級設定
+    local project_main=$(git config lazygit.main-branch 2>/dev/null)
+    if [ -n "$project_main" ]; then
+        echo "$project_main"
+        return 0
+    fi
+    
+    # 2. 檢查 remote 的預設分支
     local remote_default=$(git symbolic-ref refs/remotes/$remote_name/HEAD 2>/dev/null | sed "s@^refs/remotes/$remote_name/@@")
     if [ -n "$remote_default" ]; then
         echo "$remote_default"
         return 0
     fi
     
-    # 檢查 remote 是否有常見的主分支模式
+    # 3. 收集所有可能的主分支候選
     local remote_branches=$(git ls-remote --heads $remote_name 2>/dev/null)
-    
-    # 按優先順序檢查主分支候選
-    # 使用配置中的候選列表，支援用戶自訂
-    local main_candidates_str=${LAZYGIT_MAIN_CANDIDATES:-"main master production prod release/production feature/production release/main release/master"}
+    local main_candidates_str=${LAZYGIT_MAIN_CANDIDATES:-"main master production feature/production release/production prod release/main release/master"}
     local main_candidates=($main_candidates_str)
     local found_candidates=()
     
-    # 先收集所有存在的候選分支
     for candidate in "${main_candidates[@]}"; do
         if echo "$remote_branches" | grep -q "refs/heads/$candidate$"; then
             found_candidates+=("$candidate")
         fi
     done
     
-    # 處理多個候選分支的情況
-    if [ ${#found_candidates[@]} -gt 1 ]; then
-        echo "警告：發現多個可能的主分支: ${found_candidates[*]}" >&2
-        echo "使用優先級最高的分支: ${found_candidates[0]}" >&2
-        echo "如需更改，請執行: git config --global lazygit.main-branch <分支名>" >&2
-    fi
-    
-    # 回傳第一個找到的候選分支（優先級最高）
-    if [ ${#found_candidates[@]} -gt 0 ]; then
+    # 4. 根據找到的候選分支數量決定行為
+    if [ ${#found_candidates[@]} -eq 0 ]; then
+        # 沒有找到候選分支，使用全域設定或預設值
+        local global_main=$(git config --global lazygit.main-branch 2>/dev/null)
+        echo "${global_main:-$DEFAULT_MAIN_BRANCH}"
+        return 0
+    elif [ ${#found_candidates[@]} -eq 1 ]; then
+        # 只有一個候選分支，直接使用
         echo "${found_candidates[0]}"
         return 0
-    fi
-    
-    # 檢查本地分支
-    for candidate in "${main_candidates[@]}"; do
-        if git show-ref --verify --quiet refs/heads/$candidate; then
-            echo "$candidate"
+    else
+        # 多個候選分支，需要處理
+        if [ "$interactive" = "true" ]; then
+            # 互動模式：讓用戶選擇
+            echo "發現多個可能的主分支:" >&2
+            for i in "${!found_candidates[@]}"; do
+                echo "  $((i+1)). ${found_candidates[$i]}" >&2
+            done
+            echo "" >&2
+            
+            while true; do
+                echo -n "請選擇主分支 [1-${#found_candidates[@]}] 或按 Enter 使用第一個 (${found_candidates[0]}): " >&2
+                read -r choice
+                
+                if [ -z "$choice" ]; then
+                    # 空輸入，使用第一個
+                    echo "${found_candidates[0]}"
+                    break
+                elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#found_candidates[@]} ]; then
+                    # 有效選擇
+                    local selected="${found_candidates[$((choice-1))]}"
+                    echo "$selected"
+                    
+                    # 詢問是否要保存為專案設定
+                    echo -n "是否要將 '$selected' 設為此專案的預設主分支? [y/N]: " >&2
+                    read -r save_choice
+                    if [[ "$save_choice" =~ ^[Yy]$ ]]; then
+                        git config lazygit.main-branch "$selected"
+                        echo "已設定專案主分支為: $selected" >&2
+                    fi
+                    break
+                else
+                    echo "無效選擇，請輸入 1-${#found_candidates[@]} 的數字" >&2
+                fi
+            done
+            return 0
+        else
+            # 非互動模式：使用優先級最高的分支並發出警告
+            echo "警告：發現多個可能的主分支: ${found_candidates[*]}" >&2
+            echo "使用優先級最高的分支: ${found_candidates[0]}" >&2
+            echo "如需更改，請執行: git config lazygit.main-branch <分支名>" >&2
+            echo "${found_candidates[0]}"
             return 0
         fi
-    done
-    
-    # 如果都找不到，回退到配置的主分支
-    echo "$LAZYGIT_MAIN_BRANCH"
+    fi
+}
+
+# 原有的檢測函數（保持向後相容）
+detect_main_branch() {
+    smart_detect_main_branch "$1" false
 }
 
 # 自動檢測當前倉庫的開發分支名稱

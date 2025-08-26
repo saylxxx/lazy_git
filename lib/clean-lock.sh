@@ -5,7 +5,13 @@
 # 預設會檢查是否有 Git 程序運行，使用 -f 可強制刪除
 # 不論有沒有檔案都會試著去移除，顯示 '完成'
 
-source "$(dirname "$0")/config.sh"
+# 引用路徑處理器
+source "$(dirname "$0")/path-helper.sh"
+
+# 取得正確的 config.sh 路徑
+CONFIG_PATH=$(get_config_path)
+
+source "$CONFIG_PATH"
 source "$(dirname "$0")/common.sh"
 
 # 確保目錄存在
