@@ -164,10 +164,10 @@ ensure_branch_exists() {
             # 如果是主分支，嘗試自動檢測
             if [ "$branch" = "$LAZYGIT_MAIN_BRANCH" ]; then
                 echo "嘗試自動檢測正確的主分支..."
-                local detected_main=$(detect_main_branch $remote_name)
+                local detected_main=$(smart_detect_main_branch "$remote_name" false)
                 if [ "$detected_main" != "$branch" ]; then
                     echo "檢測到主分支應該是: $detected_main"
-                    echo "建議執行: git config --global lazygit.main-branch $detected_main"
+                    echo "建議執行: git config lazygit.main-branch $detected_main"
                 fi
             fi
             

@@ -22,14 +22,12 @@ ensure_home_directory
 remote_name=$(get_remote_name)
 
 # 智能檢測主分支名稱
-detected_main=$(detect_main_branch $remote_name)
-main_branch=$(git config --global lazygit.main-branch || echo "$detected_main")
+detected_main=$(smart_detect_main_branch "$remote_name" false)
+main_branch="$detected_main"
 
-# 如果配置的分支與檢測的不同，使用檢測到的分支
-if [ "$main_branch" != "$detected_main" ]; then
-    echo "注意：配置的主分支是 '$main_branch'，但檢測到的是 '$detected_main'"
-    echo "使用檢測到的分支: $detected_main"
-    main_branch="$detected_main"
+# 如果檢測失敗，回退到配置值
+if [ -z "$main_branch" ]; then
+    main_branch=$(git config lazygit.main-branch 2>/dev/null || git config --global lazygit.main-branch 2>/dev/null || echo "$DEFAULT_MAIN_BRANCH")
 fi
 
 # 確保本地存在 main 分支

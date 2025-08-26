@@ -22,14 +22,12 @@ ensure_home_directory
 remote_name=$(get_remote_name)
 
 # 智能檢測開發分支名稱
-detected_develop=$(detect_develop_branch $remote_name)
-develop_branch=$(git config --global lazygit.develop-branch || echo "$detected_develop")
+detected_develop=$(detect_develop_branch "$remote_name")
+develop_branch="$detected_develop"
 
-# 如果配置的分支與檢測的不同，使用檢測到的分支
-if [ "$develop_branch" != "$detected_develop" ]; then
-    echo "注意：配置的開發分支是 '$develop_branch'，但檢測到的是 '$detected_develop'"
-    echo "使用檢測到的分支: $detected_develop"
-    develop_branch="$detected_develop"
+# 如果檢測失敗，回退到配置值
+if [ -z "$develop_branch" ]; then
+    develop_branch=$(git config lazygit.develop-branch 2>/dev/null || git config --global lazygit.develop-branch 2>/dev/null || echo "$DEFAULT_DEVELOP_BRANCH")
 fi
 
 # 確保本地存在 develop 分支
