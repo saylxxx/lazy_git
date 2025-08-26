@@ -19,7 +19,7 @@ LAZYGIT_EXCLUDED_BRANCHES_FILE="$HOME/.lazygit_excluded_branches"
 if [ -f "$LAZYGIT_EXCLUDED_BRANCHES_FILE" ]; then
     LAZYGIT_EXCLUDED_BRANCHES=$(cat "$LAZYGIT_EXCLUDED_BRANCHES_FILE")
 else
-    LAZYGIT_EXCLUDED_BRANCHES="main dev release develop master production staging hotfix"
+    LAZYGIT_EXCLUDED_BRANCHES="main dev release develop master production"
 fi
 LAZYGIT_EXCLUDED_BRANCHES="$LAZYGIT_EXCLUDED_BRANCHES $LAZYGIT_MAIN_BRANCH $LAZYGIT_DEVELOP_BRANCH"
 LAZYGIT_EXCLUDED_BRANCHES=$(echo "$LAZYGIT_EXCLUDED_BRANCHES" | tr ' ' '\n' | sort | uniq | tr '\n' ' ')
