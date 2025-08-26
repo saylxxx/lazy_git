@@ -8,6 +8,12 @@ DEFAULT_USER_EMAIL="mip.yang@homeplus.net.tw"
 DEFAULT_MAIN_BRANCH="master"
 DEFAULT_DEVELOP_BRANCH="develop"
 
+# 主分支候選列表（可自訂）
+# 按優先順序排列：越前面的優先級越高
+# 用戶可以透過設置 LAZYGIT_MAIN_CANDIDATES 環境變數來自訂
+DEFAULT_MAIN_CANDIDATES="main master production feature/production release/production prod release/main release/master"
+LAZYGIT_MAIN_CANDIDATES=${LAZYGIT_MAIN_CANDIDATES:-$DEFAULT_MAIN_CANDIDATES}
+
 # 設定 lazygit 相關變數
 LAZYGIT_MAIN_BRANCH=$(git config --global lazygit.main-branch)
 LAZYGIT_MAIN_BRANCH=${LAZYGIT_MAIN_BRANCH:-$DEFAULT_MAIN_BRANCH}

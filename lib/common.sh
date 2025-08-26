@@ -32,27 +32,44 @@ detect_main_branch() {
         return 0
     fi
     
-    # 檢查 remote 是否有 main 或 master 分支
+    # 檢查 remote 是否有常見的主分支模式
     local remote_branches=$(git ls-remote --heads $remote_name 2>/dev/null)
     
-    if echo "$remote_branches" | grep -q "refs/heads/main$"; then
-        echo "main"
-        return 0
-    elif echo "$remote_branches" | grep -q "refs/heads/master$"; then
-        echo "master"
+    # 按優先順序檢查主分支候選
+    # 使用配置中的候選列表，支援用戶自訂
+    local main_candidates_str=${LAZYGIT_MAIN_CANDIDATES:-"main master production prod release/production feature/production release/main release/master"}
+    local main_candidates=($main_candidates_str)
+    local found_candidates=()
+    
+    # 先收集所有存在的候選分支
+    for candidate in "${main_candidates[@]}"; do
+        if echo "$remote_branches" | grep -q "refs/heads/$candidate$"; then
+            found_candidates+=("$candidate")
+        fi
+    done
+    
+    # 處理多個候選分支的情況
+    if [ ${#found_candidates[@]} -gt 1 ]; then
+        echo "警告：發現多個可能的主分支: ${found_candidates[*]}" >&2
+        echo "使用優先級最高的分支: ${found_candidates[0]}" >&2
+        echo "如需更改，請執行: git config --global lazygit.main-branch <分支名>" >&2
+    fi
+    
+    # 回傳第一個找到的候選分支（優先級最高）
+    if [ ${#found_candidates[@]} -gt 0 ]; then
+        echo "${found_candidates[0]}"
         return 0
     fi
     
     # 檢查本地分支
-    if git show-ref --verify --quiet refs/heads/main; then
-        echo "main"
-        return 0
-    elif git show-ref --verify --quiet refs/heads/master; then
-        echo "master"
-        return 0
-    fi
+    for candidate in "${main_candidates[@]}"; do
+        if git show-ref --verify --quiet refs/heads/$candidate; then
+            echo "$candidate"
+            return 0
+        fi
+    done
     
-    # 回退到配置的主分支
+    # 如果都找不到，回退到配置的主分支
     echo "$LAZYGIT_MAIN_BRANCH"
 }
 
