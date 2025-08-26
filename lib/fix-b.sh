@@ -12,11 +12,11 @@ source "$(dirname "$0")/common.sh"
 ensure_home_directory
 
 fix_branch() {
-    # 從 .gitconfig 中讀取開發分支名稱
-    develop_branch=$(git config --global lazygit.develop-branch || echo "$DEFAULT_DEVELOP_BRANCH")
-
     # 確認 remote 名稱
     remote_name=$(get_remote_name)
+    
+    # 智能檢測開發分支
+    develop_branch=$(detect_develop_branch $remote_name)
 
     # 確保本地存在 develop 分支
     ensure_branch_exists $develop_branch $remote_name

@@ -12,11 +12,19 @@ source "$(dirname "$0")/common.sh"
 # 確保目錄存在
 ensure_home_directory
 
-# 從 .gitconfig 中讀取主分支名稱
-main_branch=$(git config --global lazygit.main-branch || echo "master")
-
 # 確認 remote 名稱
 remote_name=$(get_remote_name)
+
+# 智能檢測主分支名稱
+detected_main=$(detect_main_branch $remote_name)
+main_branch=$(git config --global lazygit.main-branch || echo "$detected_main")
+
+# 如果配置的分支與檢測的不同，使用檢測到的分支
+if [ "$main_branch" != "$detected_main" ]; then
+    echo "注意：配置的主分支是 '$main_branch'，但檢測到的是 '$detected_main'"
+    echo "使用檢測到的分支: $detected_main"
+    main_branch="$detected_main"
+fi
 
 # 確保本地存在 main 分支
 ensure_branch_exists $main_branch $remote_name
