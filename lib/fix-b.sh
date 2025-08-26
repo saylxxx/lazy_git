@@ -4,8 +4,14 @@
 # 使用方法: fix-b [描述]
 # 如果沒有提供描述，則只會使用日期作為分支名稱; e.g., fix_20200101
 
+# 引用路徑處理器
+source "$(dirname "$0")/path-helper.sh"
+
+# 取得正確的 config.sh 路徑
+CONFIG_PATH=$(get_config_path)
+
 # 引用共用函數
-source "$(dirname "$0")/config.sh"
+source "$CONFIG_PATH"
 source "$(dirname "$0")/common.sh"
 
 # 確保目錄存在

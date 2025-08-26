@@ -5,7 +5,13 @@
 # 預設會顯示要刪除的分支並要求確認，使用 -f 可強制刪除
 # 如果沒有本地分支，顯示 '完成'
 
-source "$(dirname "$0")/config.sh"
+# 引用路徑處理器
+source "$(dirname "$0")/path-helper.sh"
+
+# 取得正確的 config.sh 路徑
+CONFIG_PATH=$(get_config_path)
+
+source "$CONFIG_PATH"
 source "$(dirname "$0")/common.sh"
 
 # 確保目錄存在

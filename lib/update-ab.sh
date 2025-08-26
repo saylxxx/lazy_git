@@ -5,8 +5,14 @@
 # 它會在不同的工作目錄中檢出每個本地分支並執行 git pull
 # 使用 -q 可減少輸出訊息
 
+# 引用路徑處理器
+source "$(dirname "$0")/path-helper.sh"
+
+# 取得正確的 config.sh 路徑
+CONFIG_PATH=$(get_config_path)
+
 # 引用共用函數
-source "$(dirname "$0")/config.sh"
+source "$CONFIG_PATH"
 source "$(dirname "$0")/common.sh"
 
 # 確保目錄存在

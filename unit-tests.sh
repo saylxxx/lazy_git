@@ -131,6 +131,9 @@ setup_test_git_repo() {
 test_clean_lock_params() {
     echo -e "${BLUE}測試 clean-lock 參數解析${NC}"
     
+    # 保存當前工作目錄
+    local original_pwd=$(pwd)
+    
     local test_dir="$TEST_OUTPUT_DIR/clean_lock_test"
     setup_test_git_repo "$test_dir"
     
@@ -145,11 +148,17 @@ test_clean_lock_params() {
     assert_contains "強制模式" "$output" "clean-lock -f 應該顯示強制模式訊息"
     assert_file_not_exists ".git/index.lock" "index.lock 應該被刪除"
     assert_file_not_exists ".git/HEAD.lock" "HEAD.lock 應該被刪除"
+    
+    # 還原工作目錄
+    cd "$original_pwd"
 }
 
 # 測試 clean-ab.sh 參數解析
 test_clean_ab_params() {
     echo -e "${BLUE}測試 clean-ab 參數解析${NC}"
+    
+    # 保存當前工作目錄
+    local original_pwd=$(pwd)
     
     local test_dir="$TEST_OUTPUT_DIR/clean_ab_test"
     setup_test_git_repo "$test_dir"
@@ -162,11 +171,17 @@ test_clean_ab_params() {
     local output=$(bash "$SCRIPT_DIR/lib/clean-ab.sh" -f 2>&1)
     
     assert_contains "強制模式" "$output" "clean-ab -f 應該顯示強制模式訊息"
+    
+    # 還原工作目錄
+    cd "$original_pwd"
 }
 
 # 測試分支命名規則
 test_branch_naming() {
     echo -e "${BLUE}測試分支命名規則${NC}"
+    
+    # 保存當前工作目錄
+    local original_pwd=$(pwd)
     
     local test_dir="$TEST_OUTPUT_DIR/branch_naming_test"
     setup_test_git_repo "$test_dir"
@@ -209,6 +224,9 @@ test_branch_naming() {
     
     # 恢復原始的 common.sh
     mv "$SCRIPT_DIR/lib/common.sh.backup" "$SCRIPT_DIR/lib/common.sh"
+    
+    # 還原工作目錄
+    cd "$original_pwd"
 }
 
 # 測試配置讀取
@@ -235,6 +253,9 @@ test_config_reading() {
 test_update_ab_params() {
     echo -e "${BLUE}測試 update-ab 參數解析${NC}"
     
+    # 保存當前工作目錄
+    local original_pwd=$(pwd)
+    
     local test_dir="$TEST_OUTPUT_DIR/update_ab_test"
     setup_test_git_repo "$test_dir"
     
@@ -243,6 +264,92 @@ test_update_ab_params() {
     
     # 在靜默模式下，輸出應該比較簡潔
     assert_contains "更新完成" "$output" "update-ab -q 應該顯示簡潔的完成訊息"
+    
+    # 還原工作目錄
+    cd "$original_pwd"
+}
+
+# 測試智能分支檢測
+test_smart_branch_detection() {
+    echo -e "${BLUE}測試智能分支檢測${NC}"
+    
+    # 保存當前工作目錄
+    local original_pwd=$(pwd)
+    
+    # 保存原有的全域配置
+    local original_global_main=$(git config --global lazygit.main-branch 2>/dev/null || echo "")
+    local original_global_develop=$(git config --global lazygit.develop-branch 2>/dev/null || echo "")
+    
+    # 載入必要的函數
+    source "$SCRIPT_DIR/lib/path-helper.sh"
+    CONFIG_PATH=$(get_config_path)
+    source "$CONFIG_PATH"
+    source "$SCRIPT_DIR/lib/common.sh"
+    
+    # 測試案例 1: 專案級別配置優先
+    local test_dir="$TEST_OUTPUT_DIR/smart_project_config_test"
+    mkdir -p "$test_dir"
+    cd "$test_dir"
+    
+    git init > /dev/null 2>&1
+    git config user.name "Test User" > /dev/null 2>&1
+    git config user.email "test@example.com" > /dev/null 2>&1
+    echo "test" > README.md
+    git add README.md > /dev/null 2>&1
+    git commit -m "Initial commit" > /dev/null 2>&1
+    git branch -M main > /dev/null 2>&1
+    git checkout -b production > /dev/null 2>&1
+    git checkout main > /dev/null 2>&1
+    
+    # 設定專案級別配置
+    git config lazygit.main-branch "production"
+    
+    local detected_project=$(smart_detect_main_branch origin false)
+    assert_equals "production" "$detected_project" "專案級別配置應該有最高優先權"
+    
+    # 清理專案配置
+    git config --unset lazygit.main-branch 2>/dev/null || true
+    
+    # 測試案例 2: 全域設定回退
+    local test_dir2="$TEST_OUTPUT_DIR/smart_global_test"
+    mkdir -p "$test_dir2"
+    cd "$test_dir2"
+    
+    git init > /dev/null 2>&1
+    git config user.name "Test User" > /dev/null 2>&1
+    git config user.email "test@example.com" > /dev/null 2>&1
+    echo "test" > README.md
+    git add README.md > /dev/null 2>&1
+    git commit -m "Initial commit" > /dev/null 2>&1
+    # 保持預設的 master 分支
+    
+    # 設定全域配置
+    git config --global lazygit.main-branch "main"
+    
+    local detected_global=$(smart_detect_main_branch origin false)
+    assert_equals "main" "$detected_global" "應該使用全域配置的主分支"
+    
+    # 測試案例 3: 預設值回退
+    git config --global --unset lazygit.main-branch 2>/dev/null || true
+    
+    local detected_default=$(smart_detect_main_branch origin false)
+    assert_equals "master" "$detected_default" "應該回退到預設主分支"
+    
+    # 還原工作目錄
+    cd "$original_pwd"
+    
+    # 還原原有的全域配置
+    if [ -n "$original_global_main" ]; then
+        git config --global lazygit.main-branch "$original_global_main"
+    else
+        git config --global --unset lazygit.main-branch 2>/dev/null || true
+    fi
+    
+    if [ -n "$original_global_develop" ]; then
+        git config --global lazygit.develop-branch "$original_global_develop"
+    else
+        git config --global --unset lazygit.develop-branch 2>/dev/null || true
+    fi
 }
 
 # 測試檔案結構
@@ -285,12 +392,15 @@ run_tests() {
             "update-ab")
                 test_update_ab_params
                 ;;
+            "smart-detection")
+                test_smart_branch_detection
+                ;;
             "file-structure")
                 test_file_structure
                 ;;
             *)
                 echo -e "${RED}未知的測試名稱: $test_name${NC}"
-                echo "可用的測試: clean-lock, clean-ab, branch-naming, config, update-ab, file-structure"
+                echo "可用的測試: clean-lock, clean-ab, branch-naming, config, update-ab, smart-detection, file-structure"
                 exit 1
                 ;;
         esac
@@ -301,6 +411,7 @@ run_tests() {
         test_clean_ab_params
         test_branch_naming
         test_update_ab_params
+        test_smart_branch_detection
     fi
 }
 
