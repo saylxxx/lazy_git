@@ -5,8 +5,14 @@ DEFAULT_USER_NAME="mip.yang"
 DEFAULT_USER_EMAIL="mip.yang@homeplus.net.tw"
 
 # 預設的分支名稱
-DEFAULT_MAIN_BRANCH="main"
+DEFAULT_MAIN_BRANCH="master"
 DEFAULT_DEVELOP_BRANCH="develop"
+
+# 主分支候選列表（可自訂）
+# 按優先順序排列：越前面的優先級越高
+# 用戶可以透過設置 LAZYGIT_MAIN_CANDIDATES 環境變數來自訂
+DEFAULT_MAIN_CANDIDATES="main master production feature/production release/production prod release/main release/master"
+LAZYGIT_MAIN_CANDIDATES=${LAZYGIT_MAIN_CANDIDATES:-$DEFAULT_MAIN_CANDIDATES}
 
 # 設定 lazygit 相關變數
 LAZYGIT_MAIN_BRANCH=$(git config --global lazygit.main-branch)
@@ -19,7 +25,7 @@ LAZYGIT_EXCLUDED_BRANCHES_FILE="$HOME/.lazygit_excluded_branches"
 if [ -f "$LAZYGIT_EXCLUDED_BRANCHES_FILE" ]; then
     LAZYGIT_EXCLUDED_BRANCHES=$(cat "$LAZYGIT_EXCLUDED_BRANCHES_FILE")
 else
-    LAZYGIT_EXCLUDED_BRANCHES="main dev release develop master"
+    LAZYGIT_EXCLUDED_BRANCHES="main dev release develop master production"
 fi
 LAZYGIT_EXCLUDED_BRANCHES="$LAZYGIT_EXCLUDED_BRANCHES $LAZYGIT_MAIN_BRANCH $LAZYGIT_DEVELOP_BRANCH"
 LAZYGIT_EXCLUDED_BRANCHES=$(echo "$LAZYGIT_EXCLUDED_BRANCHES" | tr ' ' '\n' | sort | uniq | tr '\n' ' ')

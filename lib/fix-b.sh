@@ -4,19 +4,25 @@
 # 使用方法: fix-b [描述]
 # 如果沒有提供描述，則只會使用日期作為分支名稱; e.g., fix_20200101
 
+# 引用路徑處理器
+source "$(dirname "$0")/path-helper.sh"
+
+# 取得正確的 config.sh 路徑
+CONFIG_PATH=$(get_config_path)
+
 # 引用共用函數
-source "$(dirname "$0")/config.sh"
+source "$CONFIG_PATH"
 source "$(dirname "$0")/common.sh"
 
 # 確保目錄存在
 ensure_home_directory
 
 fix_branch() {
-    # 從 .gitconfig 中讀取開發分支名稱
-    develop_branch=$(git config --global lazygit.develop-branch || echo "$DEFAULT_DEVELOP_BRANCH")
-
     # 確認 remote 名稱
     remote_name=$(get_remote_name)
+    
+    # 智能檢測開發分支
+    develop_branch=$(detect_develop_branch $remote_name)
 
     # 確保本地存在 develop 分支
     ensure_branch_exists $develop_branch $remote_name

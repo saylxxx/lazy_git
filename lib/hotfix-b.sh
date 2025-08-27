@@ -7,19 +7,31 @@
 #   ./hotfix-b.sh "描述" 20250212  # 會建立 hotfix20250212_描述 分支
 #   ./hotfix-b.sh "" 20250212      # 會建立 hotfix20250212 分支
 
+# 引用路徑處理器
+source "$(dirname "$0")/path-helper.sh"
+
+# 取得正確的 config.sh 路徑
+CONFIG_PATH=$(get_config_path)
+
 # 引用共用函數
-source "$(dirname "$0")/config.sh"
+source "$CONFIG_PATH"
 source "$(dirname "$0")/common.sh"
 
 # 確保目錄存在
 ensure_home_directory
 
 hotfix_branch() {
-    # 從 .gitconfig 中讀取主分支名稱
-    main_branch=$(git config --global lazygit.main-branch || echo "$DEFAULT_MAIN_BRANCH")
-
     # 確認 remote 名稱
     remote_name=$(get_remote_name)
+    
+    # 智能檢測主分支名稱
+    detected_main=$(smart_detect_main_branch "$remote_name" false)
+    main_branch="$detected_main"
+    
+    # 如果檢測失敗，回退到配置值
+    if [ -z "$main_branch" ]; then
+        main_branch=$(git config lazygit.main-branch 2>/dev/null || git config --global lazygit.main-branch 2>/dev/null || echo "$DEFAULT_MAIN_BRANCH")
+    fi
 
     # 確保本地存在 main 分支
     ensure_branch_exists $main_branch $remote_name
